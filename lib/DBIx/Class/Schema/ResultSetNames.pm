@@ -67,7 +67,6 @@ sub _source_name_to_phrase {
 sub _source_name_to_method_name {
   my ($class, $source_name) = @_;
   my $phrase = $class->_source_name_to_phrase($source_name);
-  my $pluralised = Lingua::EN::Inflect::Phrase::to_PL($phrase);
   return join '_', split ' ', $phrase;
 }
 

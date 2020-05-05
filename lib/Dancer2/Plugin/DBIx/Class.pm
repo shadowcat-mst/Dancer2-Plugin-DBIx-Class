@@ -30,6 +30,20 @@ has schema => (
   },
 );
 
+sub _rs_name_methods {
+  my ($self) = @_;
+  my $class = $self->_ensure_schema_class_loaded;
+  return () unless $class->can('resultset_name_methods');
+  sort keys %{$class->resultset_name_methods};
+}
+
+sub _has_rs_name_method {
+  my ($self, $has) = @_;
+  my $class = $self->_ensure_schema_class_loaded;
+  return 0 unless $class->can('resultset_name_methods');
+  0+!!$class->resultset_name_methods->{$has};
+}
+
 sub _ensure_schema_class_loaded {
   Class::C3::Componentised->ensure_class_loaded($_[0]->schema_class);
   return $_[0]->schema_class;
@@ -38,8 +52,8 @@ sub _ensure_schema_class_loaded {
 sub rs :PluginKeyword {
   my ($self, $rs) = @_;
   my $schema = $self->schema;
-  if ($schema->resultset_name_method->{$rs}) {
-    return $schema->$rs;
+  if ($self->_has_rs_name_method($rs)) {
+    return $self->$rs;
   }
   return $schema->resultset($rs);
 }
@@ -47,8 +61,8 @@ sub rs :PluginKeyword {
 sub BUILD {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
-  foreach my $rs_method (@{$class->resultset_name_methods}) {
-    register $rs_method => $self->curry::weak::rs($rs_method);
+  foreach my $rs_method ($self->_rs_name_methods) {
+    register $rs_method => $self->${\"curry::weak::${rs_method}"};
   }
 }
 

@@ -24,7 +24,7 @@ has schema => (
   builder => sub {
     my ($self) = @_;
     $self->_ensure_schema_class_loaded->connect(
-      map { ref($_) eq 'ARRAY' ? @$_ : @{$_}{qw(dns user password options)} }
+      map { ref($_) eq 'ARRAY' ? @$_ : @{$_}{qw(dsn user password options)} }
         $self->connect_info
     );
   },

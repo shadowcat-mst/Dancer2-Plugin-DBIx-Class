@@ -2,7 +2,6 @@ package Dancer2::Plugin::DBIx::Class;
 
 use Dancer2::Plugin;
 use Class::C3::Componentised;
-use curry;
 
 has schema_class => (
   is => 'ro',
@@ -59,7 +58,9 @@ sub BUILD {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
   foreach my $rs_method ($self->_rs_name_methods) {
-    register $rs_method => $self->${\"curry::weak::${rs_method}"};
+    register $rs_method => sub {
+      $self->schema->$rs_method(@_);
+    };
   }
 }
 

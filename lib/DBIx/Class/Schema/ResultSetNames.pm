@@ -45,7 +45,7 @@ sub register_resultset_name_methods {
       my ($self, @args) = @_;
       my $rs = $self->resultset($source_name);
       return $rs unless @args;
-      return $rs->search(@args);
+      return $rs->search_rs(@args);
     }
   );
   return;

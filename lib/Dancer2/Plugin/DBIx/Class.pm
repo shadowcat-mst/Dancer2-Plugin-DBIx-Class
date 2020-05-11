@@ -59,7 +59,7 @@ sub BUILD {
   my $class = $self->_ensure_schema_class_loaded;
   foreach my $rs_method ($self->_rs_name_methods) {
     register $rs_method => sub {
-      $self->schema->$rs_method(@_);
+      shift->schema->$rs_method(@_);
     };
   }
 }

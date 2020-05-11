@@ -29,6 +29,11 @@ has schema => (
   },
 );
 
+has export_schema_methods => (
+  is => 'ro',
+  default => sub { [] }
+);
+
 sub _rs_name_methods {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
@@ -57,9 +62,12 @@ sub rs :PluginKeyword( rs rset resultset ) {
 sub BUILD {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
-  foreach my $rs_method ($self->_rs_name_methods) {
-    register $rs_method => sub {
-      shift->schema->$rs_method(@_);
+  my @export_methods = (
+    $self->_rs_name_methods, @{$self->export_schema_methods}
+  );
+  foreach my $exported_method (@export_methods) {
+    register $exported_method => sub {
+      shift->schema->$exported_method(@_);
     };
   }
 }

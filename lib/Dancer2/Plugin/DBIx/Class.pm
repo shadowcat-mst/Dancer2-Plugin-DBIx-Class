@@ -26,12 +26,12 @@ has schema => (
   },
 );
 
-has method_prefix => (is => 'ro', predicate => 1);
+has export_prefix => (is => 'ro', predicate => 1);
 
 sub _maybe_prefix_method {
   my ($self, $method) = @_;
-  return $method unless $self->method_prefix;
-  return join('_', $self->method_prefix, $method);
+  return $method unless $self->export_prefix;
+  return join('_', $self->export_prefix, $method);
 }
 
 has export_schema_methods => (

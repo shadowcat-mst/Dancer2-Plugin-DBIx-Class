@@ -12,7 +12,7 @@ __PACKAGE__->resultset_name_methods({});
 sub _register_source {
   my ($class, $source_name, @rest) = @_;
   my $source = $class->next::method($source_name, @rest);
-  $class->register_resultset_name_method($source_name);
+  $class->register_resultset_name_methods($source_name);
   return $source;
 }
 

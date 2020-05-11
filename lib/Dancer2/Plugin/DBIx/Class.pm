@@ -52,9 +52,6 @@ sub _ensure_schema_class_loaded {
 sub rs :PluginKeyword( rs rset resultset ) {
   my ($self, $rs) = @_;
   my $schema = $self->schema;
-  if ($self->_has_rs_name_method($rs)) {
-    return $self->$rs;
-  }
   return $schema->resultset($rs);
 }
 

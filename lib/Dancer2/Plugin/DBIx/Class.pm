@@ -6,19 +6,16 @@ use Class::C3::Componentised;
 has schema_class => (
   is => 'ro',
   from_config => 1,
-  plugin_keyword => 1,
 );
 
 has connect_info => (
   is => 'rw',
   from_config => 1,
-  plugin_keyword => 1,
   trigger => 'clear_schema',
 );
 
 has schema => (
   is => 'lazy',
-  plugin_keyword => 1,
   clearer => 1,
   builder => sub {
     my ($self) = @_;
@@ -28,6 +25,14 @@ has schema => (
     );
   },
 );
+
+has method_prefix => (is => 'ro', predicate => 1);
+
+sub _maybe_prefix_method {
+  my ($self, $method) = @_;
+  return $method unless $self->method_prefix;
+  return join('_', $self->method_prefix, $method);
+}
 
 has export_schema_methods => (
   is => 'ro',
@@ -62,11 +67,16 @@ sub rs :PluginKeyword( rs rset resultset ) {
 sub BUILD {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
+  my $call_rs = sub { shift->resultset(@_) };
+  register $self->_maybe_prefix_method('rs') => $call_rs;
+  register $self->_maybe_prefix_method('rset') => $call_rs;
+  register $self->_maybe_prefix_method('resultset') => $call_rs;
+  register $self->_maybe_prefix_method('schema') => sub { shift->schema(@_) };
   my @export_methods = (
-    $self->_rs_name_methods, @{$self->export_schema_methods}
+    $self->_rs_name_methods, @{$self->export_schema_methods}, 'resultset'
   );
   foreach my $exported_method (@export_methods) {
-    register $exported_method => sub {
+    register $self->_maybe_prefix_method($exported_method) => sub {
       shift->schema->$exported_method(@_);
     };
   }

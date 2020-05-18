@@ -58,7 +58,7 @@ sub _ensure_schema_class_loaded {
   return $_[0]->schema_class;
 }
 
-sub rs :PluginKeyword( rs rset resultset ) {
+sub rs {
   my ($self, $rs) = @_;
   my $schema = $self->schema;
   return $schema->resultset($rs);
@@ -68,18 +68,20 @@ sub BUILD {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
   my $call_rs = sub { shift->resultset(@_) };
-  register $self->_maybe_prefix_method('rs') => $call_rs;
-  register $self->_maybe_prefix_method('rset') => $call_rs;
-  register $self->_maybe_prefix_method('resultset') => $call_rs;
-  register $self->_maybe_prefix_method('schema') => sub { shift->schema(@_) };
+  my %kw;
+  $kw{$self->_maybe_prefix_method('rs')} = $call_rs;
+  $kw{$self->_maybe_prefix_method('rset')} = $call_rs;
+  $kw{$self->_maybe_prefix_method('resultset')} = $call_rs;
+  $kw{$self->_maybe_prefix_method('schema')} = sub { shift->schema(@_) };
   my @export_methods = (
     $self->_rs_name_methods, @{$self->export_schema_methods}, 'resultset'
   );
   foreach my $exported_method (@export_methods) {
-    register $self->_maybe_prefix_method($exported_method) => sub {
+    $kw{$self->_maybe_prefix_method($exported_method)} = sub {
       shift->schema->$exported_method(@_);
     };
   }
+  @{$self->keywords}{keys %kw} = values %kw;
 }
 
 1;

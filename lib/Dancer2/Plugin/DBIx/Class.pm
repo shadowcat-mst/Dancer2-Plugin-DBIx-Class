@@ -10,8 +10,16 @@ has schema_class => (
 
 has connect_info => (
   is => 'rw',
-  from_config => 1,
   trigger => 'clear_schema',
+  builder => sub {
+    my ($self) = @_;
+    my $config = $self->config;
+    return [
+      $config->{connect_info}
+        ? @{$config->{connect_info}}
+        : @{$config}{qw(dsn user password options)}
+    ];
+  }
 );
 
 has schema => (
@@ -19,10 +27,7 @@ has schema => (
   clearer => 1,
   builder => sub {
     my ($self) = @_;
-    $self->_ensure_schema_class_loaded->connect(
-      map { ref($_) eq 'ARRAY' ? @$_ : @{$_}{qw(dsn user password options)} }
-        $self->connect_info
-    );
+    $self->_ensure_schema_class_loaded->connect(@{$self->connect_info});
   },
 );
 

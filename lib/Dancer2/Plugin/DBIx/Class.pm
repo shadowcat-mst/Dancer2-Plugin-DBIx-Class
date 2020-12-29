@@ -1,6 +1,7 @@
 package Dancer2::Plugin::DBIx::Class;
 
 use Dancer2::Plugin;
+use Carp;
 use Class::C3::Componentised;
 
 has schema_class => (
@@ -31,7 +32,16 @@ has schema => (
   },
 );
 
-has export_prefix => (is => 'ro', predicate => 1);
+has export_prefix => (
+	is => 'ro',
+	predicate => 1,
+   builder => sub {
+    my ($self) = @_;
+    my $config = $self->config;
+    return $config->{export_prefix};
+  }
+
+);
 
 sub _maybe_prefix_method {
   my ($self, $method) = @_;
@@ -59,7 +69,9 @@ sub _has_rs_name_method {
 }
 
 sub _ensure_schema_class_loaded {
-  Class::C3::Componentised->ensure_class_loaded($_[0]->schema_class);
+  croak 'No schema class defined' if !$_[0]->schema_class;
+  eval { Class::C3::Componentised->ensure_class_loaded($_[0]->schema_class) };
+  croak 'Schema class '.$_[0]->schema_class.' unable to load' if $@;
   return $_[0]->schema_class;
 }
 
@@ -72,14 +84,14 @@ sub rs {
 sub BUILD {
   my ($self) = @_;
   my $class = $self->_ensure_schema_class_loaded;
-  my $call_rs = sub { shift->resultset(@_) };
+  my $call_rs = sub { shift->schema->resultset(@_) };
   my %kw;
-  $kw{$self->_maybe_prefix_method('rs')} = $call_rs;
-  $kw{$self->_maybe_prefix_method('rset')} = $call_rs;
-  $kw{$self->_maybe_prefix_method('resultset')} = $call_rs;
-  $kw{$self->_maybe_prefix_method('schema')} = sub { shift->schema(@_) };
+  $kw{'rs'} = $call_rs;
+  $kw{'rset'} = $call_rs;
+  $kw{'resultset'} = $call_rs;
+  $kw{'schema'} = sub { shift->schema(@_) };
   my @export_methods = (
-    $self->_rs_name_methods, @{$self->export_schema_methods}, 'resultset'
+    $self->_rs_name_methods, @{$self->export_schema_methods}
   );
   foreach my $exported_method (@export_methods) {
     $kw{$self->_maybe_prefix_method($exported_method)} = sub {

@@ -1,5 +1,6 @@
 package Dancer2::Plugin::DBIx::Class;
-
+use strict;
+use warnings;
 use Dancer2::Plugin;
 use Class::C3::Componentised;
 
@@ -19,7 +20,7 @@ has connect_info => (
         ? @{$config->{connect_info}}
         : @{$config}{qw(dsn user password options)}
     ];
-  }
+  },
 );
 
 has schema => (
@@ -71,7 +72,7 @@ sub rs {
 
 sub BUILD {
   my ($self) = @_;
-  my $class = $self->_ensure_schema_class_loaded;
+  $self->_ensure_schema_class_loaded;
   my $call_rs = sub { shift->resultset(@_) };
   my %kw;
   $kw{$self->_maybe_prefix_method('rs')} = $call_rs;
@@ -79,7 +80,7 @@ sub BUILD {
   $kw{$self->_maybe_prefix_method('resultset')} = $call_rs;
   $kw{$self->_maybe_prefix_method('schema')} = sub { shift->schema(@_) };
   my @export_methods = (
-    $self->_rs_name_methods, @{$self->export_schema_methods}, 'resultset'
+    $self->_rs_name_methods, @{$self->export_schema_methods}, 'resultset',
   );
   foreach my $exported_method (@export_methods) {
     $kw{$self->_maybe_prefix_method($exported_method)} = sub {
@@ -90,3 +91,7 @@ sub BUILD {
 }
 
 1;
+
+__END__
+
+# ABSTRACT: A small bit of syntactic sugar for DBIx::Class use in Dancer2
